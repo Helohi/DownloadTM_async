@@ -1,4 +1,3 @@
-MAIN_QUALITY = 360
 ALLQUALITIES = ['-360-', '-720-']
 EXCEPTIONS = ['-audio-']
 CHANNELLINK = '\nCheckout new updates on " https://icq.im/TM_team "'

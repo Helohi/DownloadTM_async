@@ -4,7 +4,7 @@ from re import findall
 from sys import argv
 import asyncio
 
-from Constance import (HELLO, INQUEUE, MAIN_QUALITY, NOSPAM, NOTINCHANNEL,
+from Constance import (HELLO, INQUEUE, NOSPAM, NOTINCHANNEL,
                        NOVIDEOQUALITY)
 from functions import (check_server_clearness, choose_quality,
                        google_search, in_channel, install_youtube,
@@ -13,7 +13,7 @@ from googleapi import upload_file, check_drive
 
 queue = dict()
 # Developer functions
-if len(argv) > 1:
+if len(argv) > 0:
     only_admin = True
     log('Only admin')
 else:
@@ -142,10 +142,8 @@ async def worker(bot, event, is_admin: bool = False):
                       'Start downloading...', bot, event.from_chat))
         await print_bot_task
 
-        install_task = asyncio.create_task(
-            install_youtube(url=url, res=opt,
-                            audio=True if opt == 'audio' else None))
-        path = await install_task
+        path = install_youtube(url=url, res=opt,
+                            audio=True if opt == 'audio' else None)
 
         if path is None:  # No such video quality
             print_bot_task = asyncio.create_task(

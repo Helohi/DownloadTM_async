@@ -18,7 +18,7 @@ logging.basicConfig(level=logging.INFO,
                     format='%(asctime)s - " %(message)s "', datefmt='%H:%M:%S')
 
 
-async def install_youtube(url: str, res: str = None, audio: bool = False, path: str = None) -> str:
+def install_youtube(url: str, res: str = None, audio: bool = False, path: str = None) -> str:
     """ Install a youtube video and give a path to it """
     if not audio:
         # Checking quality as others are not acceptable
