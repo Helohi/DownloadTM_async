@@ -129,7 +129,7 @@ async def worker(bot, event, is_admin: bool = False):
             opt = ''
 
         if not opt:  # Need quality
-            text_, buttons = choose_quality(url=event.text)
+            text_, buttons = await asyncio.create_task(choose_quality(url=event.text))
             print_button_task = asyncio.create_task(
                 print_bot_button(bot, event.from_chat, text_,
                                  buttons=buttons, is_admin=is_admin))
