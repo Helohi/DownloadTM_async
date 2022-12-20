@@ -74,7 +74,7 @@ async def main_functions(bot, event, is_admin: bool = False):
                                      len(queue)), bot, event.from_chat))
         await print_bot_task
     queue[event.from_chat] = (event, is_admin,)
-    return None
+    return None 
 
 
 def TeamLeader(bot):
@@ -201,7 +201,7 @@ async def worker(bot, event, is_admin: bool = False):
 async def sending_video(bot, event, path, only_gd: bool = False, chat: bool = False):
     """ Function for sending video """
     log(f"In function -> sending video, chat:{chat}")
-    if getsize(path) > 400_000_000 or only_gd:  # By Google drive
+    if getsize(path) > 40_000_000 or only_gd:  # By Google drive
         log("Sending by google drive")
         try:
             link = await asyncio.create_task(upload_file(path=path, title=basename(path)))
