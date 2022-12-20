@@ -78,7 +78,7 @@ async def delete_all_files_from_folders(folder: str = None, num: int = 20):
     file_list = await asyncio.create_task(get_all_files(folder=folder)[::-1])
 
     # Deleting all files from folders
-    async for file in file_list[:num]:
+    for file in file_list[:num]:
         file.Delete()
     return True
 
@@ -89,7 +89,7 @@ async def delete_one_file(file_name: str, folder: str = None):
 
     # Delete file
     try:
-        async for file in await asyncio.create_task(get_all_files(folder=folder)):
+        for file in await asyncio.create_task(get_all_files(folder=folder)):
             if file['title'] == file_name:
                 file.Delete()
                 return True
