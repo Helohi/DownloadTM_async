@@ -14,9 +14,9 @@ async def answer(bot, event):
     await asyncio.create_task(answer_callback(bot, event))
 
     is_admin = False
-    if len(argv) > 1 and not '-admin-' in event.callback_query:  # Not allowed to session
+    if len(argv) > 0 and not '-admin-' in event.callback_query:  # Not allowed to session
         return None
-    elif not len(argv) > 1 and '-admin-' in event.callback_query:  # Not to us
+    elif not len(argv) > 0 and '-admin-' in event.callback_query:  # Not to us
         return None
     else:
         if '-admin-' in event.callback_query:

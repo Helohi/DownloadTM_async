@@ -81,8 +81,8 @@ def TeamLeader(bot):
         if queue:  # To not write every time "Bot is ready"
             log('Bot start working')
             for user_id in queue.copy():  # Copy to not mess up list, while changing
-                log(f'start working {user_id},'
-                    f'{queue[user_id][0].data["from"]["firstName"]}.'
+                log(f'start working {user_id}, '
+                    f'{queue[user_id][0].data["from"]["firstName"]}. '
                     f'Message: {queue[user_id][0].text}')
                 try:
                     # Sending to main algorithm
