@@ -61,12 +61,12 @@ async def main_functions(bot, event, is_admin: bool = False):
         return None
 
     # Only in channel users can use this bot. Checking that. , channel_id="686294615@chat.agent"
-    if await in_channel(bot, event.from_chat, channel_id="686294615@chat.agent") is False:
-        print_button_task = asyncio.create_task(
-            print_bot_button(bot, event.from_chat, text=NOTINCHANNEL,
-                             url=True, Channel='https://icq.im/TM_team'))
-        await print_button_task
-        return None
+    # if await in_channel(bot, event.from_chat, channel_id="686294615@chat.agent") is False:
+    #     print_button_task = asyncio.create_task(
+    #         print_bot_button(bot, event.from_chat, text=NOTINCHANNEL,
+    #                          url=True, Channel='https://icq.im/TM_team'))
+    #     await print_button_task
+    #     return None
 
     if queue:
         print_bot_task = asyncio.create_task(
