@@ -13,7 +13,7 @@ from googleapi import upload_file, check_drive
 
 queue = dict()
 # Developer functions
-if len(argv) > 0:
+if len(argv) > 1:
     only_admin = True
     log('Only admin')
 else:
