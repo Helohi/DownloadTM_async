@@ -200,8 +200,8 @@ async def worker(bot, event, is_admin: bool = False):
 
 async def sending_video(bot, event, path, only_gd: bool = False, chat: bool = False):
     """ Function for sending video """
-    log(f"In function -> sending video, chat:{chat}")
-    if getsize(path) > 40_000_000 or only_gd:  # By Google drive
+    log(f"In function -> sending video")
+    if only_gd or getsize(path) > 40_000_000:  # By Google drive
         log("Sending by google drive")
         try:
             link = await asyncio.create_task(upload_file(path=path, title=basename(path)))
@@ -236,6 +236,7 @@ async def sending_video(bot, event, path, only_gd: bool = False, chat: bool = Fa
                 break
         else:
             await asyncio.create_task(sending_video(bot, event, path, only_gd=True))
+    return None
 
 
 if __name__ == '__main__':

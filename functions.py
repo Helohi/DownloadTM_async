@@ -207,9 +207,10 @@ async def choose_quality(url: str):
     return text, buttons
 
 
-async def mp4_to_mp3(path: str):
+def mp4_to_mp3(path: str):
+    log("Converting to mp3")
     video = AudioFileClip(path)
-    video.write_audiofile(path.replace('mp4', 'mp3'))
+    video.write_audiofile(path.replace('mp4', 'mp3'), logger=None)
     return path.replace('mp4', 'mp3')
 
 
