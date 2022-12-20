@@ -41,7 +41,7 @@ async def upload_file(path: str, title: str = None, folder: str = None) -> Googl
     file = drive.CreateFile({'title': title, 'parents': [{'id': folder}]})
     file.SetContentFile(path)
     try:
-        await asyncio.create_task(file.Upload())
+        file.Upload()
     except BaseException:
         try:
             log("PyDrive couldn't deliver it, going to PyDrive2")
@@ -50,7 +50,7 @@ async def upload_file(path: str, title: str = None, folder: str = None) -> Googl
             file = drive2.CreateFile(
                 {'title': title, 'parents': [{'id': folder}]})
             file.SetContentFile(path)
-            await asyncio.create_task(file.Upload())
+            file.Upload()
         except BaseException as err:
             log(type(err), err)
             raise ValueError('File is too big')

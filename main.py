@@ -10,7 +10,8 @@ from functions import log
 
 # Creating bot
 def main():
-    TOKEN = "001.0860138766.2792244880:1007541821"
+    # TOKEN = "001.0860138766.2792244880:1007541821"
+    TOKEN = "001.3036675131.1370245590:1007918545"
     bot = Bot(token=TOKEN)
 
     # Correct options in bot

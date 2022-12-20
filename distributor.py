@@ -25,10 +25,11 @@ def dist(bot, event):
     """ First checking """
 
     if event.from_chat in queue:
-        print_bot(NOSPAM, bot, event.from_chat)
+        asyncio.run(print_bot(NOSPAM, bot, event.from_chat))
         return None
     elif answer := is_data_wrong(event.text):
-        print_bot(answer, bot, event.from_chat)
+        asyncio.run(print_bot(answer, bot, event.from_chat))
+        return None
 
     # Admin function logic
     is_admin = False
@@ -73,6 +74,7 @@ async def main_functions(bot, event, is_admin: bool = False):
                                      len(queue)), bot, event.from_chat))
         await print_bot_task
     queue[event.from_chat] = (event, is_admin,)
+    return None
 
 
 def TeamLeader(bot):
