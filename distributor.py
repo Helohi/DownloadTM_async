@@ -26,6 +26,7 @@ else:
 
 def dist(bot, event):
     """ First checking """
+    log("Got new message")
     # Checking for spamming
     if event.from_chat in in_process:
         log(f"Spamming {event.from_chat}  {event.data['from']['firstName']}")
@@ -40,8 +41,10 @@ def dist(bot, event):
     # Admin function logic
     is_admin = False
     if only_admin and not ('-admin-' in event.text):  # Not allowed to session
+        in_process.remove(event.from_chat)
         return None
     elif not only_admin and ('-admin-' in event.text):  # Not to us
+        in_process.remove(event.from_chat)
         return None
     else:
         if "-admin-" in event.text:
@@ -49,6 +52,7 @@ def dist(bot, event):
             event.text = event.text.replace('-admin-', '')
 
     main_functions(bot, event, is_admin)
+    log("Waiting new one")
 
 
 @multiproc
@@ -94,8 +98,9 @@ def tryexcept(func):
 @tryexcept
 def worker(bot, event, is_admin: bool = False):
     """ The main things happen here """
-    log(f"From: {event.from_chat}, {event.data['from']['firstName']}, "
-        f"{event.data['from']['nick']}. "
+    log(f"From: {event.from_chat}, "
+        f"{event.data['from']['firstName'] if 'firstName' in event.data['from'] else None}, "
+        f"{event.data['from']['nick'] if 'nick' in event.data['from'] else 'None'}. "
         f"Message: {event.text}")
     # Advertizement
     print_bot(adverizement(), bot, event.from_chat)

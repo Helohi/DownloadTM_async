@@ -4,7 +4,7 @@ from multiprocessing import Process
 from Constance import NOSPAM
 from functions import choose_quality, log, print_bot, print_bot_button, multiproc
 from googleapi import delete_one_file
-
+import distributor as dr
 
 def answer(bot, event):
     answer_callback(bot, event)
@@ -28,16 +28,16 @@ def answer(bot, event):
         return
 
     elif 'download:' in (data := event.callback_query):
-        from distributor import in_process, worker
-
-        if event.from_chat in in_process:
+        if event.from_chat in dr.in_process:
             print_bot(NOSPAM, bot, event.from_chat)
             return None
         else:
-            in_process.append(event.from_chat)
+            dr.in_process.append(event.from_chat)
 
         event.text = data.strip('download:')
-        Process(target=worker, args=(bot, event, is_admin)).run()
+        dr.main_functions(bot, event, is_admin)
+        log("Send requests and Im free")
+        return None
 
     else:
         text_, buttons = choose_quality(event.callback_query)
