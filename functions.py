@@ -4,7 +4,7 @@ from os import listdir, remove
 from random import choice
 from sys import argv
 from urllib.error import HTTPError
-import asyncio
+from multiprocessing import Process
 
 from bot.bot import Bot
 from moviepy.editor import AudioFileClip
@@ -59,7 +59,15 @@ def install_youtube(url: str, res: str = None, audio: bool = False, path: str = 
         return None
 
 
-async def print_bot(text: str, bot: Bot, user_id: str) -> None:
+def multiproc(func):
+    def runner(*args, **kwargs):
+        Process(target=func, args=args if args else (),
+                kwargs=kwargs if kwargs else {}).run()
+    return runner
+
+
+@multiproc
+def print_bot(text: str, bot: Bot, user_id: str) -> None:
     """ Easier way to write sth to user """
     while True:
         try:
@@ -71,8 +79,9 @@ async def print_bot(text: str, bot: Bot, user_id: str) -> None:
             return sended_text_params
 
 
-async def print_bot_button(bot, user_id: str = '705079793', text: str = 'Buttons:',  url=False,
-                           buttons: dict = None, in_row: int = 8, is_admin: bool = False, **kwargs):
+@multiproc
+def print_bot_button(bot, user_id: str = '705079793', text: str = 'Buttons:',  url=False,
+                     buttons: dict = None, in_row: int = 8, is_admin: bool = False, **kwargs):
     """ Print message to bot with buttons """
     if not buttons:
         buttons = kwargs
@@ -123,7 +132,7 @@ def log(*message, show: bool = True):
         logging.warning(' '.join(map(str, message)))
 
 
-async def google_search(query: str, limit: int = 16, lang: str = 'en', is_admin: bool = False):
+def google_search(query: str, limit: int = 16, lang: str = 'en', is_admin: bool = False):
     """ User friendly interface, included google that search youtube videos by query """
     results = VideosSearch(query, limit=limit, language=lang)
     num, text = 1, 'Results:'
@@ -152,7 +161,7 @@ def is_data_wrong(data: str) -> str:
         return ''
 
 
-async def in_channel(bot, user_id: str, channel_id: str = "686692940@chat.agent"):
+def in_channel(bot, user_id: str, channel_id: str = "686692940@chat.agent"):
     """ Checking is a user on chat or not """
     try:
         lst_of_users = bot.get_chat_members(chat_id=channel_id).json()
@@ -180,15 +189,21 @@ async def in_channel(bot, user_id: str, channel_id: str = "686692940@chat.agent"
         return None
 
 
-async def links():
+def links():
     """ Give 5 randomly choose videos that already exist in google drive """
     import googleapi
 
     # Preparing data
-    lst_of_videos = googleapi.get_all_files()
+    lst_of_videos, lst_of_give = googleapi.get_all_files(), []
     if len(lst_of_videos) < 2:
         return 'No one download video since last clear', {'Google': 'google.com'}
-    lst_of_give = [choice(lst_of_videos) for _ in range(5)]
+
+    for video in lst_of_videos:  # Easy ways are not work
+        if len(lst_of_give) >= 5:
+            break
+        elif video not in lst_of_give:
+            lst_of_give.append(video)
+
     text, buttons = '', dict()
 
     for num, give in enumerate(lst_of_give):
@@ -198,7 +213,7 @@ async def links():
     return text, buttons
 
 
-async def choose_quality(url: str):
+def choose_quality(url: str):
     text = PATTERNFORCHOOSING.format(url)
     buttons = dict()
     for quality in ALLQUALITIES+EXCEPTIONS:
@@ -214,10 +229,17 @@ def mp4_to_mp3(path: str):
     return path.replace('mp4', 'mp3')
 
 
-async def check_server_clearness():
+@multiproc
+def check_server_clearness():
     for file in listdir():
         if '.mp4' in file or '.mp3' in file:
             remove(file)
+
+
+def adverizement():
+    with open("ADS.txt", 'r', encoding="utf8") as file:
+        text = file.read().strip().split('///')
+    return "<b>РЕКЛАМА</b>:\n" + choice(text)
 
 
 if __name__ == '__main__':

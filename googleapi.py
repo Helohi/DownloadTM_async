@@ -3,11 +3,10 @@ from pydrive2.drive import GoogleDrive as gd2
 from pydrive.auth import GoogleAuth
 from pydrive.drive import GoogleDrive
 
-from functions import log
-import asyncio
+from functions import log, multiproc
 
 
-async def CreateAuthFiles(gauthparam):
+def CreateAuthFiles(gauthparam):
     """ Create authorized variable """
     gauthparam.LoadCredentialsFile("mycreds.txt")
     if gauthparam.credentials is None:
@@ -22,11 +21,11 @@ async def CreateAuthFiles(gauthparam):
 
 # Authorization in google drive
 gauth, gauth2 = GoogleAuth(), ga2()
-gauth = asyncio.run(CreateAuthFiles(gauth))
-gauth2 = asyncio.run(CreateAuthFiles(gauth2))
+gauth = CreateAuthFiles(gauth)
+gauth2 = CreateAuthFiles(gauth2)
 
 
-async def upload_file(path: str, title: str = None, folder: str = None) -> GoogleDrive.CreateFile:
+def upload_file(path: str, title: str = None, folder: str = None) -> GoogleDrive.CreateFile:
     """ Uploading files to the google drive """
     # Preparing variables
     if not folder:
@@ -69,13 +68,14 @@ async def upload_file(path: str, title: str = None, folder: str = None) -> Googl
     return file['alternateLink']
 
 
-async def delete_all_files_from_folders(folder: str = None, num: int = 20):
+@multiproc
+def delete_all_files_from_folders(folder: str = None, num: int = 20):
     """ Delete files from folder  """
     if not folder:
         folder = '1azbHPoW8rOeeVV08szvRWQAWrjJcn0mz'
 
     # Get list of files
-    file_list = await asyncio.create_task(get_all_files(folder=folder)[::-1])
+    file_list = get_all_files(folder=folder)[::-1]
 
     # Deleting all files from folders
     for file in file_list[:num]:
@@ -83,13 +83,14 @@ async def delete_all_files_from_folders(folder: str = None, num: int = 20):
     return True
 
 
-async def delete_one_file(file_name: str, folder: str = None):
+@multiproc
+def delete_one_file(file_name: str, folder: str = None):
     if folder is None:
         folder = '1azbHPoW8rOeeVV08szvRWQAWrjJcn0mz'
 
     # Delete file
     try:
-        for file in await asyncio.create_task(get_all_files(folder=folder)):
+        for file in get_all_files(folder=folder):
             if file['title'] == file_name:
                 file.Delete()
                 return True
@@ -98,7 +99,7 @@ async def delete_one_file(file_name: str, folder: str = None):
     return False
 
 
-async def get_all_files(folder: str = '1azbHPoW8rOeeVV08szvRWQAWrjJcn0mz') -> list:
+def get_all_files(folder: str = '1azbHPoW8rOeeVV08szvRWQAWrjJcn0mz') -> list:
     """ Get all files from folder in google drive 
     :param folder: Folder from wich all files will get or None"""
     # Checking vars
@@ -110,11 +111,13 @@ async def get_all_files(folder: str = '1azbHPoW8rOeeVV08szvRWQAWrjJcn0mz') -> li
     return drive.ListFile({'q': f"'{folder}' in parents and trashed=false"}).GetList()
 
 
-async def check_drive(max: int = 40, decrease: int = 20):
-    if len(await asyncio.create_task(get_all_files())) > max:
-        await asyncio.create_task(delete_all_files_from_folders(num=decrease))
+@multiproc
+def check_drive(max: int = 40, decrease: int = 20):
+    if len(get_all_files()) > max:
+        delete_all_files_from_folders(decrease)
+
 
 if __name__ == '__main__':
     print(len(get_all_files()))
     if (amount := int(input('How many files to delete (to cancel write "0")\n'))) != 0:
-        asyncio.run(delete_all_files_from_folders(num=amount))
+        delete_all_files_from_folders(num=amount)

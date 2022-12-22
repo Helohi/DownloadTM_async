@@ -1,17 +1,20 @@
+from multiprocessing import Process
 from os import remove
 from os.path import basename, getsize
 from re import findall
 from sys import argv
-import asyncio
 
-from Constance import (HELLO, INQUEUE, NOSPAM, NOTINCHANNEL,
-                       NOVIDEOQUALITY)
-from functions import (check_server_clearness, choose_quality,
+from bot.bot import Bot
+
+from Constance import (ERROROCCURE, HELLO, INQUEUE, NOSPAM, NOTINCHANNEL,
+                       NOVIDEOQUALITY, TOKEN)
+from functions import (adverizement, check_server_clearness, choose_quality,
                        google_search, in_channel, install_youtube,
-                       is_data_wrong, links, log, print_bot, print_bot_button)
-from googleapi import upload_file, check_drive
+                       is_data_wrong, links, log, multiproc, print_bot,
+                       print_bot_button)
+from googleapi import check_drive, upload_file
 
-queue = dict()
+in_process = []
 # Developer functions
 if len(argv) > 1:
     only_admin = True
@@ -23,13 +26,16 @@ else:
 
 def dist(bot, event):
     """ First checking """
-
-    if event.from_chat in queue:
-        asyncio.run(print_bot(NOSPAM, bot, event.from_chat))
+    # Checking for spamming
+    if event.from_chat in in_process:
+        log(f"Spamming {event.from_chat}  {event.data['from']['firstName']}")
+        print_bot(NOSPAM, bot, event.from_chat)
         return None
     elif answer := is_data_wrong(event.text):
-        asyncio.run(print_bot(answer, bot, event.from_chat))
+        print_bot(answer, bot, event.from_chat)
         return None
+
+    in_process.append(event.from_chat)  # One user - one request
 
     # Admin function logic
     is_admin = False
@@ -42,74 +48,64 @@ def dist(bot, event):
             is_admin = True
             event.text = event.text.replace('-admin-', '')
 
-    asyncio.run(main_functions(bot, event, is_admin))
+    main_functions(bot, event, is_admin)
 
 
-async def main_functions(bot, event, is_admin: bool = False):
+@multiproc
+def main_functions(bot, event, is_admin: bool = False):
     """ Second Checking """
     # Handling basic commands
     if event.text.strip() == '/start' or event.text.strip() == '/help':
-        print_bot_task = asyncio.create_task(
-            print_bot(text=HELLO, bot=bot, user_id=event.from_chat))
-        await print_bot_task
+        print_bot(text=HELLO, bot=bot, user_id=event.from_chat)
+        in_process.remove(event.from_chat)
         return None
     elif event.text.strip() == '/queue':
-        print_bot_task = asyncio.create_task(
-            print_bot(text=f'{len(queue)} in queue\n{len(queue)} в очереди',
-                      bot=bot, user_id=event.from_chat))
-        await print_bot_task
+        log('/queue: ', event.from_chat, event.data['from']['nick'])
+        print_bot(text=f'You get new Achivement: The rarest man in bot! Respect!',
+                  bot=bot, user_id=event.from_chat)
+        in_process.remove(event.from_chat)
         return None
 
     # Only in channel users can use this bot. Checking that. , channel_id="686294615@chat.agent"
-    # if await in_channel(bot, event.from_chat, channel_id="686294615@chat.agent") is False:
-    #     print_button_task = asyncio.create_task(
-    #         print_bot_button(bot, event.from_chat, text=NOTINCHANNEL,
-    #                          url=True, Channel='https://icq.im/TM_team'))
-    #     await print_button_task
-    #     return None
+    if in_channel(bot, event.from_chat, channel_id="686294615@chat.agent") is False:
+        print_bot_button(bot, event.from_chat, text=NOTINCHANNEL,
+                         url=True, Channel='https://icq.im/TM_team')
+        return None
 
-    if queue:
-        print_bot_task = asyncio.create_task(
-            print_bot(INQUEUE.format(len(queue),
-                                     len(queue)), bot, event.from_chat))
-        await print_bot_task
-    queue[event.from_chat] = (event, is_admin,)
-    return None 
+    Process(target=worker, args=(bot, event, is_admin)).run()
+    return None
 
 
-def TeamLeader(bot):
-    """ Algorithm to work gradually, one by one """
-    while 1:  # This thread is daemon, it will closed automatically when main will off
-        if queue:  # To not write every time "Bot is ready"
-            log('Bot start working')
-            for user_id in queue.copy():  # Copy to not mess up list, while changing
-                log(f'start working {user_id}, '
-                    f'{queue[user_id][0].data["from"]["firstName"]}. '
-                    f'Message: {queue[user_id][0].text}')
-                try:
-                    # Sending to main algorithm
-                    asyncio.run(worker(bot, queue[user_id][0],
-                                       queue[user_id][1]))
-                except BaseException as error:
-                    log(type(error), error)
-                finally:
-                    asyncio.run(check_server_clearness())
-                    # After finishing, we delete task from line list
-                    queue.pop(user_id)
-            else:
-                log('Bot is ready')
+def tryexcept(func):
+    def __runner(*args, **kwargs):
+        try:
+            check_server_clearness()
+            Process(target=func, args=args if args else (),
+                    kwargs=kwargs if kwargs else {}).run()
+        except BaseException as err:
+            log("Worker error: ", type(err), ":", err)
+            for user in in_process:
+                print_bot(ERROROCCURE, Bot(TOKEN), user)
+            in_process.clear()
+            return None
+    return __runner
 
 
-async def worker(bot, event, is_admin: bool = False):
+@tryexcept
+def worker(bot, event, is_admin: bool = False):
     """ The main things happen here """
+    log(f"From: {event.from_chat}, {event.data['from']['firstName']}, "
+        f"{event.data['from']['nick']}. "
+        f"Message: {event.text}")
+    # Advertizement
+    print_bot(adverizement(), bot, event.from_chat)
     # If Links(take too much resources to be at start)
     if event.text.strip() == "/links":
-        lst_ = asyncio.create_task(links())  # (text_to_send, buttons)
-        lst = await lst_
-        print_button_task = asyncio.create_task(
-            print_bot_button(bot, event.from_chat, lst[0],
-                             True, lst[1]))
-        await print_button_task
+        lst_ = links()  # (text_to_send, buttons)
+        lst = lst_
+        print_bot_button(bot, event.from_chat, lst[0],
+                         True, lst[1])
+        in_process.remove(event.from_chat)
         return
 
     # Checking url
@@ -129,93 +125,84 @@ async def worker(bot, event, is_admin: bool = False):
             opt = ''
 
         if not opt:  # Need quality
-            text_, buttons = await asyncio.create_task(choose_quality(url=event.text))
-            print_button_task = asyncio.create_task(
-                print_bot_button(bot, event.from_chat, text_,
-                                 buttons=buttons, is_admin=is_admin))
-            await print_button_task
+            text_, buttons = choose_quality(url=event.text)
+            print_bot_button(bot, event.from_chat, text_,
+                             buttons=buttons, is_admin=is_admin)
+            in_process.remove(event.from_chat)
             return None
 
         url = event.text.replace(f'-{opt}-', '').strip()
         log(f"Downloading video to server")
 
-        print_bot_task = asyncio.create_task(
-            print_bot(f'url:<i>{url}</i>\n with quality:<b>{opt}</b>\n'
-                      'Start downloading...', bot, event.from_chat))
-        await print_bot_task
+        print_bot(f'url:<i>{url}</i>\n with quality:<b>{opt}</b>\n'
+                  'Start downloading...', bot, event.from_chat)
 
         path = install_youtube(url=url, res=opt,
-                            audio=True if opt == 'audio' else None)
+                               audio=True if opt == 'audio' else None)
 
         if path is None:  # No such video quality
-            print_bot_task = asyncio.create_task(
-                print_bot(NOVIDEOQUALITY,
-                          bot=bot, user_id=event.from_chat))
-            await print_bot_task
+            print_bot(NOVIDEOQUALITY, bot=bot, user_id=event.from_chat)
+            in_process.remove(event.from_chat)
             return
 
         elif path == 'Space':  # No space on server
-            print_bot_task = asyncio.create_task(
-                print_bot('Not enough space on server, please try later!',
-                          bot, event.from_chat))
-            print_bot_task_ = asyncio.create_task(
-                print_bot('Clear me!', bot, user_id='705079793'))
-            await print_bot_task
-            await print_bot_task_
+            print_bot('Not enough space on server, please try later!',
+                      bot, event.from_chat)
+            print_bot('Clear me!', bot, user_id='705079793')
+            in_process.remove(event.from_chat)
             return
 
-        sending_video_task = asyncio.create_task(
-            sending_video(bot, event, path))
-        check_drive_task = asyncio.create_task(check_drive())
-        await sending_video_task
-        await check_drive_task
+        sending_video(bot, event, path)
+        check_drive()
 
     else:  # Not link to youtube video
-        print_bot_task = asyncio.create_task(print_bot(
+        print_bot(
             text=f'I\'m searching <b>{event.text}</b> on youtube:',
-            bot=bot, user_id=event.from_chat))
-        await print_bot_task
+            bot=bot, user_id=event.from_chat)
 
         lang = 'en'
         for char in ['-ru-', '-en-']:
             if char in event.text:
                 lang = char.strip('-')
         try:
-            google_search_task = asyncio.create_task(google_search(
-                query=event.text, lang=lang, is_admin=only_admin))
-            text, buttons = await google_search_task
+            text, buttons = google_search(
+                query=event.text, lang=lang, is_admin=only_admin)
             if not buttons:
-                await asyncio.create_task(print_bot(text='No results found',
-                                                    bot=bot, user_id=event.from_chat))
+                print_bot(text='No results found',
+                          bot=bot, user_id=event.from_chat)
             else:
-                await asyncio.create_task(
-                    print_bot_button(bot, user_id=event.from_chat,
-                                     text=text, buttons=buttons))
+                print_bot_button(bot, user_id=event.from_chat,
+                                 text=text, buttons=buttons)
+            in_process.remove(event.from_chat)
         except BaseException as err:
-            await asyncio.create_task(print_bot('Error with <i>Google search</i>, pls try <b>later</b>',
-                                                bot, user_id=event.from_chat))
+            print_bot('Error with <i>Google search</i>, pls try <b>later</b>',
+                      bot, user_id=event.from_chat)
             log('Error with Google search', type(err), err)
+            in_process.remove(event.from_chat)
+            return None
     return None
 
 
-async def sending_video(bot, event, path, only_gd: bool = False, chat: bool = False):
+@multiproc
+def sending_video(bot, event, path, only_gd: bool = False, chat: bool = False):
     """ Function for sending video """
     log(f"In function -> sending video")
     if only_gd or getsize(path) > 40_000_000:  # By Google drive
         log("Sending by google drive")
         try:
-            link = await asyncio.create_task(upload_file(path=path, title=basename(path)))
+            link = upload_file(path=path, title=basename(path))
         except BaseException as err:
-            await asyncio.create_task(print_bot('Error with <i>google drive</i>, pls try again <b>later</b>',
-                                                bot=bot, user_id=event.from_chat))
+            print_bot('Error with <i>google drive</i>, pls try again <b>later</b>',
+                      bot=bot, user_id=event.from_chat)
             log('Error with Google Drive:', type(err), err)
         else:
-            await asyncio.create_task(print_bot_button(text=f'I did it! Link:\n{link} ', bot=bot,
-                                                       user_id=event.from_chat, url=[True, False], Link=link,
-                                                       Delete=f"delete:{basename(path)}"))
+            print_bot_button(text=f'I did it! Link:\n{link} ', bot=bot,
+                             user_id=event.from_chat, url=[True, False], Link=link,
+                             Delete=f"delete:{basename(path)}")
         finally:
             log("Removing video from server")
-            await asyncio.create_task(remove(path))
+            remove(path)
+            in_process.remove(event.from_chat)
     else:  # by ICQ
         log("Sending by icq")
         for _ in range(3):
@@ -227,15 +214,15 @@ async def sending_video(bot, event, path, only_gd: bool = False, chat: bool = Fa
                         continue
             except BaseException as err:
                 print(type(err), ':', err)
-                await asyncio.create_task(
-                    sending_video(bot, event, path, only_gd=True))
+                sending_video(bot, event, path, only_gd=True)
                 break
             else:
+                in_process.remove(event.from_chat)
                 log("Removing video from server")
-                await asyncio.create_task(remove(path))
+                remove(path)
                 break
         else:
-            await asyncio.create_task(sending_video(bot, event, path, only_gd=True))
+            sending_video(bot, event, path, only_gd=True)
     return None
 
 

@@ -1,17 +1,13 @@
 from sys import argv
-import asyncio
+from multiprocessing import Process
 
 from Constance import NOSPAM
-from functions import log, print_bot, print_bot_button, choose_quality
+from functions import choose_quality, log, print_bot, print_bot_button, multiproc
 from googleapi import delete_one_file
 
 
-def run_answer(bot, event):
-    asyncio.run(answer(bot, event))
-
-
-async def answer(bot, event):
-    await asyncio.create_task(answer_callback(bot, event))
+def answer(bot, event):
+    answer_callback(bot, event)
 
     is_admin = False
     if len(argv) > 1 and not '-admin-' in event.callback_query:  # Not allowed to session
@@ -26,35 +22,32 @@ async def answer(bot, event):
     log('Got callback from button')
 
     if 'delete:' in (data := event.callback_query):
-        await asyncio.create_task(delete_one_file(file_name=data.lstrip('delete:')))
-        await asyncio.create_task(print_bot("<b>Thank you</b> for saving memory!👍❤",
-                                            bot, event.from_chat))
+        delete_one_file(file_name=data.lstrip('delete:'))
+        print_bot("<b>Thank you</b> for saving memory!👍❤",
+                  bot, event.from_chat)
         return
 
     elif 'download:' in (data := event.callback_query):
-        from distributor import queue
+        from distributor import in_process, worker
 
-        if event.from_chat in queue:
+        if event.from_chat in in_process:
             print_bot(NOSPAM, bot, event.from_chat)
             return None
+        else:
+            in_process.append(event.from_chat)
 
         event.text = data.strip('download:')
-        if queue:
-            await asyncio.create_task(print_bot(
-                f'Got it! You added to queue ({len(queue)})\nВы добавлены в очередь ({len(queue)})',
-                bot, event.from_chat))
-        queue[event.from_chat] = (event, is_admin,)
+        Process(target=worker, args=(bot, event, is_admin)).run()
 
     else:
-        text_, buttons = await asyncio.create_task(
-            choose_quality(event.callback_query))
-        await asyncio.create_task(
-            print_bot_button(text=text_,
-                bot=bot, user_id=event.from_chat, buttons=buttons))
+        text_, buttons = choose_quality(event.callback_query)
+        print_bot_button(text=text_, bot=bot,
+                         user_id=event.from_chat, buttons=buttons)
         return
 
 
-async def answer_callback(bot, event):
+@multiproc
+def answer_callback(bot, event):
     bot.answer_callback_query(
         query_id=event.data['queryId'],
         text="Got it!",

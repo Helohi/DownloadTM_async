@@ -1,3 +1,4 @@
+TOKEN = "001.3036675131.1370245590:1007918545"
 ALLQUALITIES = ['-360-', '-720-']
 EXCEPTIONS = ['-audio-']
 CHANNELLINK = '\nCheckout new updates on " https://icq.im/TM_team "'
@@ -11,7 +12,7 @@ HELLO = "Hello new user! I'm here to introduce myself:\n"\
         f"More functions: {', '.join(EXCEPTIONS)}\n"\
         "You can also write ' /links '\n"\
         "/queue will help you figure out how many people in queue\n"\
-        "------Russian-----\n"\
+        "----- Русский -----\n"\
         "Привет, новый пользователь! Я покажу как мною пользоваться:\n"\
         "Сначала подпишись на этот канал ' https://icq.im/TM_team '\n"\
         "Что бы искать просто напиши в боте свой вопрос. Например: 'Толстой Война и мир'\n"\
@@ -37,4 +38,6 @@ PATTERNFORSEARCH = """\n\n{}. NAME: <i>{}</i>
 DURATION: <b>{}</b>
 FROM: <i>{}</i>
 WHEN: <b>{}</b>\n\n"""
-DATABASEFILE = 'user.db'
+ERROROCCURE = "Bot🤖 got an error 🤦‍♂️, users list📃 was removed.\nPlease send📩 your reqests again🔁!\n" \
+              "---------- Русский ----------\nБот🤖 получил ошибку 🤦‍♂️, лист📃 с пользователями был удален\n" \
+              "Пожалуйста повторите🔁 свое последнее действие/запрос📩!"
