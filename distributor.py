@@ -1,20 +1,22 @@
-from multiprocessing import Process
+# from multiprocessing import Process
+from threading import Thread
 from os import remove
 from os.path import basename, getsize
 from re import findall
 from sys import argv
+from time import time
 
 from bot.bot import Bot
 
-from Constance import (ERROROCCURE, HELLO, INQUEUE, NOSPAM, NOTINCHANNEL,
+from Constance import (ERROROCCURE, HELLO, NOSPAM, NOTINCHANNEL,
                        NOVIDEOQUALITY, TOKEN)
 from functions import (adverizement, check_server_clearness, choose_quality,
                        google_search, in_channel, install_youtube,
                        is_data_wrong, links, log, multiproc, print_bot,
-                       print_bot_button)
+                       print_bot_button, check_for_overtime)
 from googleapi import check_drive, upload_file
 
-in_process = []
+in_process, started, to_start = set(), [], dict()
 # Developer functions
 if len(argv) > 1:
     only_admin = True
@@ -32,19 +34,17 @@ def dist(bot, event):
         log(f"Spamming {event.from_chat}  {event.data['from']['firstName']}")
         print_bot(NOSPAM, bot, event.from_chat)
         return None
+    elif (chat := event.data["chat"]["type"]) == 'group' or chat == "channel":
+        return None
     elif answer := is_data_wrong(event.text):
         print_bot(answer, bot, event.from_chat)
         return None
 
-    in_process.append(event.from_chat)  # One user - one request
-
     # Admin function logic
     is_admin = False
     if only_admin and not ('-admin-' in event.text):  # Not allowed to session
-        in_process.remove(event.from_chat)
         return None
     elif not only_admin and ('-admin-' in event.text):  # Not to us
-        in_process.remove(event.from_chat)
         return None
     else:
         if "-admin-" in event.text:
@@ -52,7 +52,6 @@ def dist(bot, event):
             event.text = event.text.replace('-admin-', '')
 
     main_functions(bot, event, is_admin)
-    log("Waiting new one")
 
 
 @multiproc
@@ -61,13 +60,11 @@ def main_functions(bot, event, is_admin: bool = False):
     # Handling basic commands
     if event.text.strip() == '/start' or event.text.strip() == '/help':
         print_bot(text=HELLO, bot=bot, user_id=event.from_chat)
-        in_process.remove(event.from_chat)
         return None
     elif event.text.strip() == '/queue':
         log('/queue: ', event.from_chat, event.data['from']['nick'])
         print_bot(text=f'You get new Achivement: The rarest man in bot! Respect!',
                   bot=bot, user_id=event.from_chat)
-        in_process.remove(event.from_chat)
         return None
 
     # Only in channel users can use this bot. Checking that. , channel_id="686294615@chat.agent"
@@ -76,26 +73,39 @@ def main_functions(bot, event, is_admin: bool = False):
                          url=True, Channel='https://icq.im/TM_team')
         return None
 
-    Process(target=worker, args=(bot, event, is_admin)).run()
+    in_process.add(event.from_chat)  # One user - one request
+    to_start[event.from_chat] = (event, is_admin,)
     return None
 
 
-def tryexcept(func):
-    def __runner(*args, **kwargs):
+def team_leader(bot):
+    global started
+    while True:
         try:
-            check_server_clearness()
-            Process(target=func, args=args if args else (),
-                    kwargs=kwargs if kwargs else {}).run()
+            if to_start:
+                if not in_process:
+                    check_server_clearness()
+                check_drive()
+                for id in to_start.copy():
+                    process_ = Thread(target=worker,
+                                      args=(bot,
+                                            to_start[id][0],
+                                            to_start[id][1]),
+                                      daemon=True)
+                    to_start.pop(id)
+                    process_.start()
+                    started.append((time(), process_, id))
+                    log(f"{len(started)} processes running")
         except BaseException as err:
-            log("Worker error: ", type(err), ":", err)
+            # If chought an unexpected error
+            log(f"Error in team_leader: {type(err)}, {err}")
             for user in in_process:
                 print_bot(ERROROCCURE, Bot(TOKEN), user)
             in_process.clear()
-            return None
-    return __runner
+            to_start.clear()
+    return
 
 
-@tryexcept
 def worker(bot, event, is_admin: bool = False):
     """ The main things happen here """
     log(f"From: {event.from_chat}, "
@@ -110,7 +120,8 @@ def worker(bot, event, is_admin: bool = False):
         lst = lst_
         print_bot_button(bot, event.from_chat, lst[0],
                          True, lst[1])
-        in_process.remove(event.from_chat)
+        in_process.remove(
+            event.from_chat) if event.from_chat in in_process else print(end="")
         return
 
     # Checking url
@@ -133,7 +144,8 @@ def worker(bot, event, is_admin: bool = False):
             text_, buttons = choose_quality(url=event.text)
             print_bot_button(bot, event.from_chat, text_,
                              buttons=buttons, is_admin=is_admin)
-            in_process.remove(event.from_chat)
+            in_process.remove(
+                event.from_chat) if event.from_chat in in_process else print(end="")
             return None
 
         url = event.text.replace(f'-{opt}-', '').strip()
@@ -142,22 +154,30 @@ def worker(bot, event, is_admin: bool = False):
         print_bot(f'url:<i>{url}</i>\n with quality:<b>{opt}</b>\n'
                   'Start downloading...', bot, event.from_chat)
 
-        path = install_youtube(url=url, res=opt,
-                               audio=True if opt == 'audio' else None)
+        path = list((None,))
+        proc_ = Thread(target=install_youtube, kwargs={"url": url, "res": opt,
+                                                       "audio": True if opt == 'audio' else None, "return_list": path})
+        proc_.start()
+        proc_.join()
+        path = path[-1]
 
         if path is None:  # No such video quality
             print_bot(NOVIDEOQUALITY, bot=bot, user_id=event.from_chat)
-            in_process.remove(event.from_chat)
+            in_process.remove(
+                event.from_chat) if event.from_chat in in_process else print(end="")
             return
 
         elif path == 'Space':  # No space on server
             print_bot('Not enough space on server, please try later!',
                       bot, event.from_chat)
             print_bot('Clear me!', bot, user_id='705079793')
-            in_process.remove(event.from_chat)
+            in_process.remove(
+                event.from_chat) if event.from_chat in in_process else print(end="")
             return
 
-        sending_video(bot, event, path)
+        proc_ = Thread(target=sending_video, args=(bot, event, path))
+        proc_.start()
+        proc_.join()
         check_drive()
 
     else:  # Not link to youtube video
@@ -170,20 +190,26 @@ def worker(bot, event, is_admin: bool = False):
             if char in event.text:
                 lang = char.strip('-')
         try:
-            text, buttons = google_search(
-                query=event.text, lang=lang, is_admin=only_admin)
+            rtn_lst = list((None, None,))
+            proc_ = Thread(target=google_search, kwargs={
+                "query": event.text, "lang": lang, "is_admin": only_admin, "return_list": rtn_lst})
+            proc_.start()
+            proc_.join()
+            text, buttons = rtn_lst[-2], rtn_lst[-1]
             if not buttons:
                 print_bot(text='No results found',
                           bot=bot, user_id=event.from_chat)
             else:
                 print_bot_button(bot, user_id=event.from_chat,
                                  text=text, buttons=buttons)
-            in_process.remove(event.from_chat)
+            in_process.remove(
+                event.from_chat) if event.from_chat in in_process else print(end="")
         except BaseException as err:
             print_bot('Error with <i>Google search</i>, pls try <b>later</b>',
                       bot, user_id=event.from_chat)
             log('Error with Google search', type(err), err)
-            in_process.remove(event.from_chat)
+            in_process.remove(
+                event.from_chat) if event.from_chat in in_process else print(end="")
             return None
     return None
 
@@ -195,7 +221,11 @@ def sending_video(bot, event, path, only_gd: bool = False, chat: bool = False):
     if only_gd or getsize(path) > 40_000_000:  # By Google drive
         log("Sending by google drive")
         try:
-            link = upload_file(path=path, title=basename(path))
+            link = list((None,))
+            proc_ = Thread(target=upload_file, kwargs={"path":path, "title":basename(path), "return_list":link})
+            proc_.start()
+            proc_.join()
+            link = link[-1]
         except BaseException as err:
             print_bot('Error with <i>google drive</i>, pls try again <b>later</b>',
                       bot=bot, user_id=event.from_chat)
@@ -207,7 +237,8 @@ def sending_video(bot, event, path, only_gd: bool = False, chat: bool = False):
         finally:
             log("Removing video from server")
             remove(path)
-            in_process.remove(event.from_chat)
+            in_process.remove(
+                event.from_chat) if event.from_chat in in_process else print(end="")
     else:  # by ICQ
         log("Sending by icq")
         for _ in range(3):
@@ -222,7 +253,8 @@ def sending_video(bot, event, path, only_gd: bool = False, chat: bool = False):
                 sending_video(bot, event, path, only_gd=True)
                 break
             else:
-                in_process.remove(event.from_chat)
+                in_process.remove(
+                    event.from_chat) if event.from_chat in in_process else print(end="")
                 log("Removing video from server")
                 remove(path)
                 break

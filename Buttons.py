@@ -1,10 +1,11 @@
 from sys import argv
-from multiprocessing import Process
 
-from Constance import NOSPAM
-from functions import choose_quality, log, print_bot, print_bot_button, multiproc
-from googleapi import delete_one_file
 import distributor as dr
+from Constance import NOSPAM
+from functions import (choose_quality, log, multiproc, print_bot,
+                       print_bot_button)
+from googleapi import delete_one_file
+
 
 def answer(bot, event):
     answer_callback(bot, event)
@@ -32,11 +33,9 @@ def answer(bot, event):
             print_bot(NOSPAM, bot, event.from_chat)
             return None
         else:
-            dr.in_process.append(event.from_chat)
-
-        event.text = data.strip('download:')
-        dr.main_functions(bot, event, is_admin)
-        log("Send requests and Im free")
+            event.text = data.strip('download:')
+            dr.in_process.add(event.from_chat)  # One user - one request
+            dr.to_start[event.from_chat] = (event, is_admin,)
         return None
 
     else:

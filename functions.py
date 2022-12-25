@@ -1,24 +1,26 @@
 import json
 import logging
+from threading import Thread
+from multiprocessing import Process
 from os import listdir, remove
 from random import choice
 from sys import argv
+from time import sleep, time
 from urllib.error import HTTPError
-from multiprocessing import Process
 
 from bot.bot import Bot
 from moviepy.editor import AudioFileClip
 from pytube import YouTube
 from youtubesearchpython import VideosSearch
 
-from Constance import (ALLQUALITIES, EXCEPTIONS, PATTERNFORCHOOSING,
-                       PATTERNFORSEARCH)
+from Constance import (ALLQUALITIES, EXCEPTIONS, MAXTIME, PATTERNFORCHOOSING,
+                       PATTERNFORSEARCH, TIMERROR)
 
 logging.basicConfig(level=logging.INFO,
                     format='%(asctime)s - " %(message)s "', datefmt='%H:%M:%S')
 
 
-def install_youtube(url: str, res: str = None, audio: bool = False, path: str = None) -> str:
+def install_youtube(url: str, res: str = None, audio: bool = False, path: str = None, return_list: list = None) -> str:
     """ Install a youtube video and give a path to it """
     if not audio:
         # Checking quality as others are not acceptable
@@ -42,7 +44,18 @@ def install_youtube(url: str, res: str = None, audio: bool = False, path: str = 
             else:
                 video_path = video.download()
 
-            return mp4_to_mp3(video_path) if audio else video_path
+            # Convert to mp3 with thread
+            if audio:
+                video_path_list = list((None,))
+                proc_ = Thread(target=mp4_to_mp3, args=(video_path, video_path_list))
+                proc_.start()
+                proc_.join()
+                video_path = video_path_list[-1]
+
+            if return_list:
+                return_list.append(video_path)
+            else:
+                return video_path
         except ConnectionResetError as err:
             log(type(err), err, '-> Trying again!')
             continue
@@ -51,12 +64,24 @@ def install_youtube(url: str, res: str = None, audio: bool = False, path: str = 
             continue
         except IOError as err:
             log(type(err), err)
-            return 'Space'
+            if return_list:
+                return_list.append('Space')
+            else:
+                return 'Space'
         except Exception as err:
             log(type(err), err)
             return None
     else:
         return None
+
+
+def mp4_to_mp3(path: str, return_list:list = None):
+    log("Converting to mp3")
+    video = AudioFileClip(path)
+    video.write_audiofile(path.replace('mp4', 'mp3'), logger=None)
+    if return_list:
+        return_list.append(path.replace('mp4', 'mp3'))
+    return path.replace('mp4', 'mp3')
 
 
 def multiproc(func):
@@ -132,7 +157,7 @@ def log(*message, show: bool = True):
         logging.warning(' '.join(map(str, message)))
 
 
-def google_search(query: str, limit: int = 16, lang: str = 'en', is_admin: bool = False):
+def google_search(query: str, limit: int = 16, lang: str = 'en', is_admin: bool = False, return_list: list = None):
     """ User friendly interface, included google that search youtube videos by query """
     results = VideosSearch(query, limit=limit, language=lang)
     num, text = 1, 'Results:'
@@ -147,11 +172,16 @@ def google_search(query: str, limit: int = 16, lang: str = 'en', is_admin: bool 
             ' -admin-' if is_admin else result['link']
         num += 1
 
+    if return_list:
+        return_list.append(text)
+        return_list.append(buttons)
     return text, buttons
 
 
 def is_data_wrong(data: str) -> str:
-    if 'https://www.google.com/url' in data:
+    if data is None:
+        return "Something went wrong, your message is not readable"
+    elif 'https://www.google.com/url' in data:
         return "Please send https://youtu... link(not google link)"
     elif 'https://files.icq.net' in data:
         return "It is neither link nor query"
@@ -222,13 +252,6 @@ def choose_quality(url: str):
     return text, buttons
 
 
-def mp4_to_mp3(path: str):
-    log("Converting to mp3")
-    video = AudioFileClip(path)
-    video.write_audiofile(path.replace('mp4', 'mp3'), logger=None)
-    return path.replace('mp4', 'mp3')
-
-
 @multiproc
 def check_server_clearness():
     for file in listdir():
@@ -240,6 +263,27 @@ def adverizement():
     with open("ADS.txt", 'r', encoding="utf8") as file:
         text = file.read().strip().split('///')
     return "<b>РЕКЛАМА</b>:\n" + choice(text)
+
+
+def check_for_overtime(bot):
+    """ Checking if process take too many time """
+    from distributor import started, in_process
+    while True:
+        time_ = time()
+        if started:
+            notstopping = 0
+            for item in started.copy():
+                if not item[1].is_alive():
+                    started.remove(item)
+                    continue
+                if time_-item[0] >= MAXTIME:
+                    notstopping += 1
+                    print_bot(TIMERROR, bot, item[2])
+                    started.remove(item)
+                    if item[2] in in_process:
+                        in_process.remove(item[2])
+            log(f"Not stopping process: {notstopping}")
+        sleep(60)
 
 
 if __name__ == '__main__':

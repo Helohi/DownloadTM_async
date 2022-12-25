@@ -32,7 +32,6 @@ NOTINCHANNEL = "To use this bot you have to <b>subscribe</b>(or resubscribe) to 
                "Что бы использовать этого бота нужно <b>подписаться</b> на <i>канал</i>\n"\
                "<b>Link</b>: ' https://icq.im/TM_team '"
 NOSPAM = "We already got your requests! Please wait till we process it\n-----------\nМы уже получили от вас запрос! Просим подождать пока мы его не обра<b>бот</b>аем"
-INQUEUE = 'Got it! You added to queue ({})\nВы добавлены в очередь ({})'
 PATTERNFORCHOOSING = "url: {}\nChoose quality:"
 PATTERNFORSEARCH = """\n\n{}. NAME: <i>{}</i>
 DURATION: <b>{}</b>
@@ -41,3 +40,7 @@ WHEN: <b>{}</b>\n\n"""
 ERROROCCURE = "Bot🤖 got an error 🤦‍♂️, users list📃 was removed.\nPlease send📩 your reqests again🔁!\n" \
               "---------- Русский ----------\nБот🤖 получил ошибку 🤦‍♂️, лист📃 с пользователями был удален\n" \
               "Пожалуйста повторите🔁 свое последнее действие/запрос📩!"
+TIMERROR = "Your request take too long to be done, maybe your video is too long, if not please try again or write to admins\n" \
+           "----Rusian---\nВаш запрос обрабатывется слишком долго, возможно ваше видео слишком большое.\n" \
+           "Если нет пожалуйста попробуйте заново или напишите админам"
+MAXTIME = 900
