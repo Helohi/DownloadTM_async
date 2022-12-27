@@ -8,7 +8,7 @@ from time import time
 
 from bot.bot import Bot
 
-from Constance import (ERROROCCURE, HELLO, NOSPAM, NOTINCHANNEL,
+from Constance import (ERROROCCURE, HELLO, NOSPAM, PAY,
                        NOVIDEOQUALITY, TOKEN)
 from functions import (check_server_clearness, choose_quality, google_search,
                        in_channel, install_youtube, is_data_wrong, links, log,
@@ -38,6 +38,12 @@ def dist(bot, event):
     elif answer := is_data_wrong(event.text):
         print_bot(answer, bot, event.from_chat)
         return None
+    # Only in channel users can use this bot. Checking that. , channel_id="686294615@chat.agent"
+    elif in_channel(bot, event.from_chat, channel_id="686692940@chat.agent") is None:
+        log(f"Not subscribed {event.from_chat}, {event.data['from']['nick']}, {event.data['from']['firstName']}")
+        print_bot_button(bot, event.from_chat, text=PAY,
+                         url=True, Buy='https://web.icq.com/chat/alexmoon')
+        return None
 
     # Admin function logic
     is_admin = False
@@ -64,12 +70,6 @@ def main_functions(bot, event, is_admin: bool = False):
         log('/queue: ', event.from_chat, event.data['from']['nick'])
         print_bot(text=f'You get new Achivement: The rarest man in bot! Respect!',
                   bot=bot, user_id=event.from_chat)
-        return None
-
-    # Only in channel users can use this bot. Checking that. , channel_id="686294615@chat.agent"
-    if in_channel(bot, event.from_chat, channel_id="686294615@chat.agent") is False:
-        print_bot_button(bot, event.from_chat, text=NOTINCHANNEL,
-                         url=True, Channel='https://icq.im/TM_team')
         return None
 
     in_process.add(event.from_chat)  # One user - one request
