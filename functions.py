@@ -3,7 +3,6 @@ import logging
 from threading import Thread
 from multiprocessing import Process
 from os import listdir, remove
-from random import choice
 from sys import argv
 from time import sleep, time
 from urllib.error import HTTPError
@@ -47,7 +46,8 @@ def install_youtube(url: str, res: str = None, audio: bool = False, path: str = 
             # Convert to mp3 with thread
             if audio:
                 video_path_list = list((None,))
-                proc_ = Thread(target=mp4_to_mp3, args=(video_path, video_path_list))
+                proc_ = Thread(target=mp4_to_mp3, args=(
+                    video_path, video_path_list))
                 proc_.start()
                 proc_.join()
                 video_path = video_path_list[-1]
@@ -75,7 +75,7 @@ def install_youtube(url: str, res: str = None, audio: bool = False, path: str = 
         return None
 
 
-def mp4_to_mp3(path: str, return_list:list = None):
+def mp4_to_mp3(path: str, return_list: list = None):
     log("Converting to mp3")
     video = AudioFileClip(path)
     video.write_audiofile(path.replace('mp4', 'mp3'), logger=None)
@@ -257,12 +257,6 @@ def check_server_clearness():
     for file in listdir():
         if '.mp4' in file or '.mp3' in file:
             remove(file)
-
-
-def adverizement():
-    with open("ADS.txt", 'r', encoding="utf8") as file:
-        text = file.read().strip().split('///')
-    return "<b>РЕКЛАМА</b>:\n" + choice(text)
 
 
 def check_for_overtime(bot):

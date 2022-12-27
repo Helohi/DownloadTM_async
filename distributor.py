@@ -1,19 +1,18 @@
 # from multiprocessing import Process
-from threading import Thread
 from os import remove
 from os.path import basename, getsize
 from re import findall
 from sys import argv
+from threading import Thread
 from time import time
 
 from bot.bot import Bot
 
 from Constance import (ERROROCCURE, HELLO, NOSPAM, NOTINCHANNEL,
                        NOVIDEOQUALITY, TOKEN)
-from functions import (adverizement, check_server_clearness, choose_quality,
-                       google_search, in_channel, install_youtube,
-                       is_data_wrong, links, log, multiproc, print_bot,
-                       print_bot_button, check_for_overtime)
+from functions import (check_server_clearness, choose_quality, google_search,
+                       in_channel, install_youtube, is_data_wrong, links, log,
+                       multiproc, print_bot, print_bot_button)
 from googleapi import check_drive, upload_file
 
 in_process, started, to_start = set(), [], dict()
@@ -112,8 +111,6 @@ def worker(bot, event, is_admin: bool = False):
         f"{event.data['from']['firstName'] if 'firstName' in event.data['from'] else None}, "
         f"{event.data['from']['nick'] if 'nick' in event.data['from'] else 'None'}. "
         f"Message: {event.text}")
-    # Advertizement
-    print_bot(adverizement(), bot, event.from_chat)
     # If Links(take too much resources to be at start)
     if event.text.strip() == "/links":
         lst_ = links()  # (text_to_send, buttons)
@@ -222,7 +219,8 @@ def sending_video(bot, event, path, only_gd: bool = False, chat: bool = False):
         log("Sending by google drive")
         try:
             link = list((None,))
-            proc_ = Thread(target=upload_file, kwargs={"path":path, "title":basename(path), "return_list":link})
+            proc_ = Thread(target=upload_file, kwargs={
+                           "path": path, "title": basename(path), "return_list": link})
             proc_.start()
             proc_.join()
             link = link[-1]
