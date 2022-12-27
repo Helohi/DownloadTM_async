@@ -40,7 +40,7 @@ def dist(bot, event):
         return None
     # Only in channel users can use this bot. Checking that. , channel_id="686294615@chat.agent"
     elif in_channel(bot, event.from_chat, channel_id="686692940@chat.agent") is False:
-        log(f"Not subscribed {event.from_chat}, {event.data['from']['nick']}, {event.data['from']['firstName']}")
+        log(f"Not subscribed {event.from_chat}, {event.data['from']['nick'] if 'nick' in event.data['from'] else 'None'}, {event.data['from']['firstName'] if 'firstName' in event.data['from'] else 'None'}")
         print_bot_button(bot, event.from_chat, text=PAY,
                          url=True, Buy='https://web.icq.com/chat/alexmoon')
         return None
