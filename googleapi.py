@@ -115,8 +115,8 @@ def get_all_files(folder: str = '1azbHPoW8rOeeVV08szvRWQAWrjJcn0mz') -> list:
 
 @multiproc
 def check_drive(max: int = 40, decrease: int = 20):
-    if len(get_all_files()) > max:
-        delete_all_files_from_folders(decrease)
+    if len(get_all_files('1azbHPoW8rOeeVV08szvRWQAWrjJcn0mz')) > max:
+        delete_all_files_from_folders(num=decrease)
 
 
 if __name__ == '__main__':
