@@ -1,26 +1,36 @@
 import json
 import logging
-from threading import Thread
-from multiprocessing import Process
+import os
 from os import listdir, remove
 from sys import argv
-from time import sleep, time
+from threading import Thread
 from urllib.error import HTTPError
 
 from bot.bot import Bot
 from moviepy.editor import AudioFileClip
 from pytube import YouTube
-from youtubesearchpython import VideosSearch
+from youtubesearchpython import VideosSearch, CustomSearch
 
-from Constance import (ALLQUALITIES, EXCEPTIONS, MAXTIME, PATTERNFORCHOOSING,
-                       PATTERNFORSEARCH, TIMERROR)
+from addition.Constance import (ALLQUALITIES, EXCEPTIONS, PATTERN_FOR_CHOOSING,
+                                PATTERN_FOR_SEARCH)
 
 logging.basicConfig(level=logging.INFO,
                     format='%(asctime)s - " %(message)s "', datefmt='%H:%M:%S')
 
 
-def install_youtube(url: str, res: str = None, audio: bool = False, path: str = None, return_list: list = None) -> str:
-    """ Install a youtube video and give a path to it """
+def run_in_thread(func):
+    """ Running function in thread """
+
+    def run(*args, **kwargs):
+        proc = Thread(target=func, args=args if args else tuple(), kwargs=kwargs if kwargs else dict())
+        return proc.start()
+
+    return run
+
+
+def install_youtube_video(url: str, res: str = None, audio: bool = False, path: str = None) \
+        -> str:
+    """ Install a YouTube video and give a path to it """
     if not audio:
         # Checking quality as others are not acceptable
         if res is None or res not in list(map(lambda x: int(x.strip('-')), ALLQUALITIES)):
@@ -52,10 +62,7 @@ def install_youtube(url: str, res: str = None, audio: bool = False, path: str = 
                 proc_.join()
                 video_path = video_path_list[-1]
 
-            if return_list:
-                return_list.append(video_path)
-            else:
-                return video_path
+            return video_path
         except ConnectionResetError as err:
             log(type(err), err, '-> Trying again!')
             continue
@@ -64,10 +71,7 @@ def install_youtube(url: str, res: str = None, audio: bool = False, path: str = 
             continue
         except IOError as err:
             log(type(err), err)
-            if return_list:
-                return_list.append('Space')
-            else:
-                return 'Space'
+            return 'Space'
         except Exception as err:
             log(type(err), err)
             return None
@@ -79,19 +83,13 @@ def mp4_to_mp3(path: str, return_list: list = None):
     log("Converting to mp3")
     video = AudioFileClip(path)
     video.write_audiofile(path.replace('mp4', 'mp3'), logger=None)
+    os.remove(path)
     if return_list:
         return_list.append(path.replace('mp4', 'mp3'))
     return path.replace('mp4', 'mp3')
 
 
-def multiproc(func):
-    def runner(*args, **kwargs):
-        Process(target=func, args=args if args else (),
-                kwargs=kwargs if kwargs else {}).run()
-    return runner
-
-
-@multiproc
+@run_in_thread
 def print_bot(text: str, bot: Bot, user_id: str) -> None:
     """ Easier way to write sth to user """
     while True:
@@ -104,8 +102,8 @@ def print_bot(text: str, bot: Bot, user_id: str) -> None:
             return sended_text_params
 
 
-@multiproc
-def print_bot_button(bot, user_id: str = '705079793', text: str = 'Buttons:',  url=False,
+@run_in_thread
+def print_bot_button(bot, user_id: str = '705079793', text: str = 'Buttons:', url=False,
                      buttons: dict = None, in_row: int = 8, is_admin: bool = False, **kwargs):
     """ Print message to bot with buttons """
     if not buttons:
@@ -122,7 +120,7 @@ def print_bot_button(bot, user_id: str = '705079793', text: str = 'Buttons:',  u
                 print(buttons[btn_text])
 
             keyboard[-1].append({"text": btn_text,
-                                action_type: buttons[btn_text]})
+                                 action_type: buttons[btn_text]})
     elif hasattr(url, '__iter__'):
         if len(url) == len(buttons):
             for btn_text, is_url in zip(buttons, url):
@@ -133,7 +131,7 @@ def print_bot_button(bot, user_id: str = '705079793', text: str = 'Buttons:',  u
 
                 action_type = 'url' if is_url else "callbackData"
                 keyboard[-1].append({"text": btn_text,
-                                    action_type: buttons[btn_text]})
+                                     action_type: buttons[btn_text]})
         else:
             raise IndexError(
                 'buttons and url have different sizes, plz check them!')
@@ -157,19 +155,23 @@ def log(*message, show: bool = True):
         logging.warning(' '.join(map(str, message)))
 
 
-def google_search(query: str, limit: int = 16, lang: str = 'en', is_admin: bool = False, return_list: list = None):
-    """ User friendly interface, included google that search youtube videos by query """
-    results = VideosSearch(query, limit=limit, language=lang)
+def search_video_by_query(query: str, limit: int = 16, lang: str = 'en', is_admin: bool = False,
+                          return_list: list = None, sort: object = None):
+    """ Userfriendly interface, included google that search YouTube videos by query """
+    if sort:
+        results = CustomSearch(query, searchPreferences=sort, limit=limit, language=lang)
+    else:
+        results = VideosSearch(query, limit=limit, language=lang)
     num, text = 1, 'Results:'
     buttons = dict()
 
     for result in results.result()['result'][:16]:
         if 'playlist' in result['link']:
             continue
-        text += PATTERNFORSEARCH.format(num, result['title'], result['duration'],
-                                        result['channel']['name'], result['publishedTime'])
+        text += PATTERN_FOR_SEARCH.format(num, result['title'], result['duration'],
+                                          result['channel']['name'], result['publishedTime'])
         buttons[f'{num}'] = result['link'] + \
-            ' -admin-' if is_admin else result['link']
+                            ' -admin-' if is_admin else result['link']
         num += 1
 
     if return_list:
@@ -220,7 +222,7 @@ def in_channel(bot, user_id: str, channel_id: str = "686692940@chat.agent"):
 
 
 def links():
-    """ Give 5 randomly choose videos that already exist in google drive """
+    """ Give 5 randomly choose videos that already exist in Google Drive """
     import googleapi
 
     # Preparing data
@@ -243,41 +245,20 @@ def links():
     return text, buttons
 
 
-def choose_quality(url: str):
-    text = PATTERNFORCHOOSING.format(url)
+def get_text_to_choose_quality(url: str):
+    text = PATTERN_FOR_CHOOSING.format(url)
     buttons = dict()
-    for quality in ALLQUALITIES+EXCEPTIONS:
+    for quality in ALLQUALITIES + EXCEPTIONS:
         buttons[quality] = f"download:{url} {quality} -admin-" \
             if len(argv) > 1 else f"download:{url} {quality}"
     return text, buttons
 
 
-@multiproc
+@run_in_thread
 def check_server_clearness():
     for file in listdir():
         if '.mp4' in file or '.mp3' in file:
             remove(file)
-
-
-def check_for_overtime(bot):
-    """ Checking if process take too many time """
-    from distributor import started, in_process
-    while True:
-        time_ = time()
-        if started:
-            notstopping = 0
-            for item in started.copy():
-                if not item[1].is_alive():
-                    started.remove(item)
-                    continue
-                if time_-item[0] >= MAXTIME:
-                    notstopping += 1
-                    print_bot(TIMERROR, bot, item[2])
-                    started.remove(item)
-                    if item[2] in in_process:
-                        in_process.remove(item[2])
-            log(f"Not stopping process: {notstopping}")
-        sleep(60)
 
 
 if __name__ == '__main__':

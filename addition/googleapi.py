@@ -3,7 +3,7 @@ from pydrive2.drive import GoogleDrive as gd2
 from pydrive.auth import GoogleAuth
 from pydrive.drive import GoogleDrive
 
-from functions import log, multiproc
+from addition.functions import log, run_in_thread
 
 
 def CreateAuthFiles(gauthparam):
@@ -70,7 +70,7 @@ def upload_file(path: str, title: str = None, folder: str = None, return_list: l
     return file['alternateLink']
 
 
-@multiproc
+@run_in_thread
 def delete_all_files_from_folders(folder: str = None, num: int = 20):
     """ Delete files from folder  """
     if not folder:
@@ -85,7 +85,7 @@ def delete_all_files_from_folders(folder: str = None, num: int = 20):
     return True
 
 
-@multiproc
+@run_in_thread
 def delete_one_file(file_name: str, folder: str = None):
     if folder is None:
         folder = '1azbHPoW8rOeeVV08szvRWQAWrjJcn0mz'
@@ -113,7 +113,7 @@ def get_all_files(folder: str = '1azbHPoW8rOeeVV08szvRWQAWrjJcn0mz') -> list:
     return drive.ListFile({'q': f"'{folder}' in parents and trashed=false"}).GetList()
 
 
-@multiproc
+@run_in_thread
 def check_drive(max: int = 40, decrease: int = 20):
     if len(get_all_files('1azbHPoW8rOeeVV08szvRWQAWrjJcn0mz')) > max:
         delete_all_files_from_folders(num=decrease)

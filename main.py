@@ -1,31 +1,30 @@
-from threading import Thread
-
 from bot.bot import Bot
 from bot.handler import BotButtonCommandHandler, MessageHandler
 
-from Buttons import answer
-from Constance import TOKEN
-from distributor import dist, team_leader
-from functions import check_for_overtime, log
+from addition.Constance import TOKEN, TOKEN_admin
+from addition.functions import log
+from addition.UserMessage_class import UserMessage
+from addition.UserButton_class import UserButtons
 
 
-# Creating bot
-def main():
+def create_bot_object():
     bot = Bot(token=TOKEN)
+    return bot
 
-    # Correct options in bot
-    bot.dispatcher.add_handler(MessageHandler(callback=dist))
-    bot.dispatcher.add_handler(BotButtonCommandHandler(callback=answer))
+
+def add_handlers(bot):
+    bot.dispatcher.add_handler(MessageHandler(callback=UserMessage))
+    bot.dispatcher.add_handler(BotButtonCommandHandler(callback=UserButtons))
     bot.start_polling()
 
-    # Team_leader runer
-    Thread(target=team_leader, args=(bot,), daemon=True).start()
-    Thread(target=check_for_overtime, args=(bot,), daemon=True).start()
-    log("team_leader run")
 
-    log('Start idle')
+def main():
+    bot = create_bot_object()
+    add_handlers(bot)
+
+    log("Starting idle")
     bot.idle()
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     main()

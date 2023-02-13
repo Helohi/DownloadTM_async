@@ -1,5 +1,5 @@
-from functions import google_search, install_youtube, is_data_wrong, links
-from googleapi import upload_file, delete_one_file
+from addition.functions import search_video_by_query, install_youtube_video, is_data_wrong, links
+from addition.googleapi import upload_file, delete_one_file
 from os import remove
 
 
@@ -11,12 +11,12 @@ def test_is_data_wrong():
 
 
 def test_install_video():
-    assert install_youtube(url='https://www.youtube.com/watch?v=GM_3IlttE-I', res=360, path='Test.mp4') != None
+    assert install_youtube_video(url='https://www.youtube.com/watch?v=GM_3IlttE-I', res=360, path='Test.mp4') != None
     remove("Test.mp4")
 
 
 def test_google_search():
-    assert len(google_search(query='hello', limit=16)[1]) == 16
+    assert len(search_video_by_query(query='hello', limit=16)[1]) == 16
 
 
 def test_upload_file():
