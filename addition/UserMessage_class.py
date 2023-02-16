@@ -22,8 +22,8 @@ class UserMessage(User):
     def check_all_conditions_and_work_out(self):
         if self.text == '/start' or self.text == '/help':  # Start
             self.answer_to_basic_commands()
-        # elif self.is_user_in_queue():  # No Spamming
-        #     self.send_message_in_bot(Text.NO_SPAM)
+        elif self.is_user_in_queue():  # No Spamming
+            self.send_message_in_bot(Text.NO_SPAM)
             self.delete_user_totally()
         elif self.is_subscribed() is False:  # Not suscribed
             self.send_message_in_bot(Text.PAY)
@@ -102,7 +102,7 @@ class UserMessage(User):
         lst_of_videos = googleapi.get_all_files()
         if len(lst_of_videos) < 2:
             return 'No one download video since last clear', {'Google': 'google.com'}
-        lst_of_give = [random.choice(set(lst_of_videos)) for _ in range(5)]
+        lst_of_give = [random.choice(lst_of_videos) for _ in range(5)]
         text, buttons = '', dict()
 
         for num, give in enumerate(lst_of_give):
@@ -150,15 +150,15 @@ class UserMessage(User):
         text, buttons = func.get_text_to_choose_quality(self.text)
         return self.send_message_in_bot_with_buttons(text=text, buttons=buttons, in_row=3)
 
-    def _send_video(self, path, only_gd: bool = False):
+    def _send_video(self, path):
         """ Function for sending video """
         func.log(f"In function -> sending video")
-        if os.path.getsize(path) > 40_000_000 or only_gd:  # By Google Drive
-            self.__send_via_google_drive(path)
+        if os.path.getsize(path) > 40_000_000:  # By Google Drive
+            self.__send_video_via_google_drive(path)
         else:  # by ICQ
-            self.__send_via_icq(path)
+            self.__send_video_via_icq(path)
 
-    def __send_via_google_drive(self, path):
+    def __send_video_via_google_drive(self, path):
         import addition.googleapi as gapi
 
         func.log("Sending by google drive")
@@ -173,7 +173,7 @@ class UserMessage(User):
         finally:
             self.delete_file_from_server(path)
 
-    def __send_via_icq(self, path):
+    def __send_video_via_icq(self, path):
         func.log("Sending by icq")
         for _ in range(3):
             try:
@@ -184,13 +184,13 @@ class UserMessage(User):
                         continue
             except BaseException as err:
                 print(type(err), ':', err)
-                self._send_video(path, only_gd=True)
+                self.__send_video_via_google_drive(path)
                 break
             else:
                 self.delete_file_from_server(path)
                 break
         else:
-            self._send_video(path, only_gd=True)
+            self.__send_video_via_google_drive(path)
 
     def search_video_by_query(self):
         self.send_message_in_bot(

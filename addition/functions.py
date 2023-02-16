@@ -89,67 +89,6 @@ def mp4_to_mp3(path: str, return_list: list = None):
     return path.replace('mp4', 'mp3')
 
 
-@run_in_thread
-def print_bot(text: str, bot: Bot, user_id: str) -> None:
-    """ Easier way to write sth to user """
-    while True:
-        try:
-            sended_text_params = bot.send_text(
-                chat_id=user_id, text=text, parse_mode='HTML')
-        except Exception:
-            continue
-        else:
-            return sended_text_params
-
-
-@run_in_thread
-def print_bot_button(bot, user_id: str = '705079793', text: str = 'Buttons:', url=False,
-                     buttons: dict = None, in_row: int = 8, is_admin: bool = False, **kwargs):
-    """ Print message to bot with buttons """
-    if not buttons:
-        buttons = kwargs
-    keyboard = [[]]
-    if isinstance(url, bool):
-        action_type = "url" if url else "callbackData"
-
-        for btn_text in buttons:
-            if len(keyboard[-1]) >= in_row:
-                keyboard.append([])
-            if is_admin and not url:  # Admin addition
-                buttons[btn_text] += ' -admin-'
-                print(buttons[btn_text])
-
-            keyboard[-1].append({"text": btn_text,
-                                 action_type: buttons[btn_text]})
-    elif hasattr(url, '__iter__'):
-        if len(url) == len(buttons):
-            for btn_text, is_url in zip(buttons, url):
-                if len(keyboard[-1]) >= in_row:
-                    keyboard.append([])
-                if not is_url and is_admin:  # Admin addition
-                    buttons[btn_text] = buttons[btn_text] + "-admin-"
-
-                action_type = 'url' if is_url else "callbackData"
-                keyboard[-1].append({"text": btn_text,
-                                     action_type: buttons[btn_text]})
-        else:
-            raise IndexError(
-                'buttons and url have different sizes, plz check them!')
-    else:
-        print_bot(text, bot, user_id)
-        return False
-
-    while True:
-        try:
-            bot.send_text(chat_id=user_id, text=text, parse_mode='HTML',
-                          inline_keyboard_markup="{}".format(json.dumps(keyboard)))
-        except BaseException:
-            continue
-        else:
-            break
-    return True
-
-
 def log(*message, show: bool = True):
     if show:
         logging.warning(' '.join(map(str, message)))
@@ -191,34 +130,6 @@ def is_data_wrong(data: str) -> str:
         return "This is a playlist, please choose a video"
     else:
         return ''
-
-
-def in_channel(bot, user_id: str, channel_id: str = "686692940@chat.agent"):
-    """ Checking is a user on chat or not """
-    try:
-        lst_of_users = bot.get_chat_members(chat_id=channel_id).json()
-        if 'cursor' in lst_of_users.keys():
-            cur = '1221'
-            while cur:
-                cur = lst_of_users['cursor'] if 'cursor' in lst_of_users.keys(
-                ) else None
-                for user in lst_of_users['members']:
-                    if user_id == user['userId']:
-                        return True
-                else:
-                    lst_of_users = bot.get_chat_members(
-                        chat_id=channel_id, cursor=cur).json()
-            else:
-                return False
-        else:
-            for user in lst_of_users['members']:
-                if user_id == user['userId']:
-                    return True
-            else:
-                return False
-    except BaseException as err:
-        log('Error in_channel: ', type(err), ':', err)
-        return None
 
 
 def links():
