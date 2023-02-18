@@ -22,7 +22,7 @@ class UserMessage(User):
     def check_all_conditions_and_work_out(self):
         if self.text == '/start' or self.text == '/help':  # Start
             self.answer_to_basic_commands()
-        elif self.is_user_in_queue():  # No Spamming
+        elif self.is_user_in_process():  # No Spamming
             self.send_message_in_bot(Text.NO_SPAM)
             self.delete_user_totally()
         elif self.is_subscribed() is False:  # Not suscribed
@@ -34,7 +34,7 @@ class UserMessage(User):
         else:  # All checks passed correctly
             self.work_out()
 
-    def is_user_in_queue(self):
+    def is_user_in_process(self):
         if self.id in UserMessage.in_process:
             return True
         return False

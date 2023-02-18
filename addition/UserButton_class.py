@@ -39,7 +39,7 @@ class UserButtons(User):
 
     @func.run_in_thread
     def download_video_via_UserMessage_class(self):
-        if UserMessage.is_user_in_queue(self):  # No Spam
+        if UserMessage.is_user_in_process(self):  # No Spam
             self.send_message_in_bot(Text.NO_SPAM)
             self.delete_user_totally()
         else:

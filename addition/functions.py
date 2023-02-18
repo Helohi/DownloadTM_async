@@ -94,8 +94,7 @@ def log(*message, show: bool = True):
         logging.warning(' '.join(map(str, message)))
 
 
-def search_video_by_query(query: str, limit: int = 16, lang: str = 'en', is_admin: bool = False,
-                          return_list: list = None, sort: object = None):
+def search_video_by_query(query: str, limit: int = 16, lang: str = 'en', is_admin: bool = False, sort: object = None):
     """ Userfriendly interface, included google that search YouTube videos by query """
     if sort:
         results = CustomSearch(query, searchPreferences=sort, limit=limit, language=lang)
@@ -113,9 +112,6 @@ def search_video_by_query(query: str, limit: int = 16, lang: str = 'en', is_admi
                             ' -admin-' if is_admin else result['link']
         num += 1
 
-    if return_list:
-        return_list.append(text)
-        return_list.append(buttons)
     return text, buttons
 
 
