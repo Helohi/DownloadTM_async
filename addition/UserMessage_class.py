@@ -6,7 +6,7 @@ import addition.Constance as Text
 
 
 class UserMessage(User):
-    in_process = dict()
+    processing = dict()
 
     def __init__(self, bot: Bot, event: Event):
         super().__init__(bot, event)
@@ -22,7 +22,8 @@ class UserMessage(User):
     def check_all_conditions_and_work_out(self):
         if self.text == '/start' or self.text == '/help':  # Start
             self.answer_to_basic_commands()
-        elif self.is_user_in_process():  # No Spamming
+        elif self.is_user_processing():  # No Spamming
+            func.log(f"Spamming id={self.id}")
             self.send_message_in_bot(Text.NO_SPAM)
             self.delete_user_totally()
         elif self.is_subscribed() is False:  # Not suscribed
@@ -32,10 +33,11 @@ class UserMessage(User):
             self.send_message_in_bot(message_to_send)
             self.delete_user_totally()
         else:  # All checks passed correctly
+            UserMessage.processing[self.id] = self.event
             self.work_out()
 
-    def is_user_in_process(self):
-        if self.id in UserMessage.in_process:
+    def is_user_processing(self):
+        if self.id in UserMessage.processing:
             return True
         return False
 
@@ -72,21 +74,29 @@ class UserMessage(User):
             return False
 
     @func.run_in_thread
-    def delete_user_from_queue(self):
-        del self.in_process[self.id]
+    def delete_user_from_processing(self):
+        del self.processing[self.id]
 
     @func.run_in_thread
     def work_out(self):
         """ It contains all algorithms, that download video """
         # If Links (put it here becouse it use a lot of resources)
-        if self.text == '/links':
-            return self.__find_and_send_text_for_link()
+        try:
+            if self.text == '/links':
+                self.__find_and_send_text_for_link()
 
-        elif "youtube" in self.text or "youtu.be" in self.text:
-            return self.__install_youtube_video
+            elif "youtube" in self.text or "youtu.be" in self.text:
+                self.__install_youtube_video()
 
-        else:  # To not spam Channels
-            return self.search_video_by_query()
+            else:  # To not spam Channels
+                self.search_video_by_query()
+        except BaseException as err:
+            func.log(f"Error:{type(err)}, {err}")
+            self.send_message_in_bot(f"Ошибка какая-то, отправьте ее админу, он поможет\n{type(err)}: {err}")
+        finally:
+            # Finishing with user
+            self.delete_user_from_processing()
+            self.delete_user_totally()
 
     def __find_and_send_text_for_link(self):
         text, buttons = self.__make_text_wich_answer_to_link()  # (text to send, buttons)
