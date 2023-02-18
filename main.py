@@ -8,7 +8,7 @@ from addition.UserButton_class import UserButtons
 
 
 def create_bot_object():
-    bot = Bot(token=TOKEN_admin )
+    bot = Bot(token=TOKEN)
     return bot
 
 
