@@ -12,7 +12,6 @@ class User:
     def give_id(self):
         return "Channel" if "@" in self.event.from_chat else self.event.from_chat
 
-    @func.run_in_thread
     def delete_user_totally(self):
         del self
 

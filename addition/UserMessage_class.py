@@ -11,12 +11,8 @@ class UserMessage(User):
     def __init__(self, bot: Bot, event: Event):
         super().__init__(bot, event)
         self.text = event.text.strip() if event.text is not None else event.msgId
+        func.log(f"Get text:  id={self.id}, name={self.name}, nick={self.name}. Query={self.text}")
         self.check_all_conditions_and_work_out()
-
-    @func.run_in_thread
-    def answer_to_basic_commands(self):
-        if self.text == '/start' or self.text == '/help':
-            self.send_message_in_bot(Text.HELP)
 
     @func.run_in_thread
     def check_all_conditions_and_work_out(self):
@@ -35,6 +31,11 @@ class UserMessage(User):
         else:  # All checks passed correctly
             UserMessage.processing[self.id] = self.event
             self.work_out()
+
+    @func.run_in_thread
+    def answer_to_basic_commands(self):
+        if self.text == '/start' or self.text == '/help':
+            self.send_message_in_bot(Text.HELP)
 
     def is_user_processing(self):
         if self.id in UserMessage.processing:
@@ -75,7 +76,8 @@ class UserMessage(User):
 
     @func.run_in_thread
     def delete_user_from_processing(self):
-        del self.processing[self.id]
+        if self.id in self.processing:
+            del self.processing[self.id]
 
     @func.run_in_thread
     def work_out(self):
