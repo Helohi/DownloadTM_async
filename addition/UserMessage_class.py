@@ -3,6 +3,7 @@ import os
 from addition.User_class import User
 import addition.functions as func
 import addition.Constance as Text
+from addition import googleapi
 
 
 class UserMessage(User):
@@ -99,6 +100,7 @@ class UserMessage(User):
             # Finishing with user
             self.delete_user_from_processing()
             self.delete_user_totally()
+            googleapi.check_drive()
 
     def __find_and_send_text_for_link(self):
         text, buttons = self.__make_text_wich_answer_to_link()  # (text to send, buttons)
@@ -107,7 +109,6 @@ class UserMessage(User):
     @staticmethod
     def __make_text_wich_answer_to_link():
         """ Give 5 randomly choose videos that already exist in Google Drive """
-        import addition.googleapi as googleapi
         import random
 
         # Preparing data

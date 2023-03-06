@@ -114,8 +114,8 @@ def get_all_files(folder: str = '1azbHPoW8rOeeVV08szvRWQAWrjJcn0mz') -> list:
 
 
 @run_in_thread
-def check_drive(max: int = 40, decrease: int = 20):
-    if len(get_all_files('1azbHPoW8rOeeVV08szvRWQAWrjJcn0mz')) > max:
+def check_drive(max_files: int = 30, decrease: int = 20):
+    if len(get_all_files('1azbHPoW8rOeeVV08szvRWQAWrjJcn0mz')) > max_files:
         delete_all_files_from_folders(num=decrease)
 
 
