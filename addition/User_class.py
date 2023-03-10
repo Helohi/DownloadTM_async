@@ -10,12 +10,14 @@ class User:
         self.id = self.give_id()
 
     def give_id(self):
+        self.id = self.event.from_chat
+        if "@" in self.id:
+            self.send_message_in_bot("DELETEME!"*10000)
         return "Channel" if "@" in self.event.from_chat else self.event.from_chat
 
     def delete_user_totally(self):
         del self
 
-    @func.run_in_thread
     def send_message_in_bot(self, text: str):
         """ Easier way to write sth to user """
         while True:
@@ -28,7 +30,6 @@ class User:
                 return sent_text_params
         return
 
-    @func.run_in_thread
     def send_message_in_bot_with_buttons(self, text: str = 'Buttons:', url=False,
                                          buttons: dict = None, in_row: int = 8, **kwargs):
         """ Print message to bot with buttons """

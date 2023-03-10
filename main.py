@@ -1,6 +1,7 @@
+import tracemalloc
+
 from bot.bot import Bot
 from bot.handler import BotButtonCommandHandler, MessageHandler
-
 from addition.Constance import TOKEN, TOKEN_admin
 from addition.functions import log
 from addition.UserMessage_class import UserMessage
@@ -23,8 +24,12 @@ def main():
     add_handlers(bot)
 
     log("Starting idle")
-    bot.idle()
+    try:
+        bot.idle()
+    except BaseException:
+        tracemalloc.stop()
 
 
 if __name__ == "__main__":
+    tracemalloc.start()
     main()

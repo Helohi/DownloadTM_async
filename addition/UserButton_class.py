@@ -22,6 +22,7 @@ class UserButtons(User):
             show_alert=False
         )
 
+    @func.run_in_thread
     def work_out(self):
         if 'delete:' in self.callback_query:
             self.delete_file_from_google_drive()
@@ -29,15 +30,14 @@ class UserButtons(User):
             self.download_video_via_UserMessage_class()
         else:  # Ask to choose quality
             self.__ask_user_to_choose_quality()
+        return self.delete_user_totally()
 
-    @func.run_in_thread
     def delete_file_from_google_drive(self):
         import addition.googleapi as gapi
 
         gapi.delete_one_file(file_name=self.callback_query.lstrip('delete:'))
         self.send_message_in_bot("<b>Thank you</b> for saving memory!👍❤")
 
-    @func.run_in_thread
     def download_video_via_UserMessage_class(self):
         if UserMessage.is_user_processing(self):  # No Spam
             func.log(f"Spamming id={self.id}")
@@ -51,7 +51,6 @@ class UserButtons(User):
         self.event.text = self.callback_query
         return UserMessage(self.bot, self.event)
 
-    @func.run_in_thread
     def __ask_user_to_choose_quality(self):
         text, buttons = func.get_text_to_choose_quality(self.callback_query)
         return self.send_message_in_bot_with_buttons(text, buttons=buttons, in_row=3)

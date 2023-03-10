@@ -31,9 +31,13 @@ class UserMessage(User):
             self.delete_user_totally()
         else:  # All checks passed correctly
             UserMessage.processing[self.id] = self.event
-            self.work_out()
 
-    @func.run_in_thread
+            import tracemalloc
+            print(tracemalloc.get_tracemalloc_memory())
+
+            self.work_out()
+        return self.delete_user_totally()
+
     def answer_to_basic_commands(self):
         if self.text == '/start' or self.text == '/help':
             self.send_message_in_bot(Text.HELP)
@@ -75,12 +79,10 @@ class UserMessage(User):
         else:
             return False
 
-    @func.run_in_thread
     def delete_user_from_processing(self):
         if self.id in self.processing:
             del self.processing[self.id]
 
-    @func.run_in_thread
     def work_out(self):
         """ It contains all algorithms, that download video """
         # If Links (put it here becouse it use a lot of resources)
@@ -124,7 +126,6 @@ class UserMessage(User):
 
         return text, buttons
 
-    @property
     def __install_youtube_video(self):
         import re
 
@@ -241,7 +242,6 @@ class UserMessage(User):
         return sort
 
     @staticmethod
-    @func.run_in_thread
     def delete_file_from_server(path):
         func.log("Removing file from server")
         os.remove(path)
