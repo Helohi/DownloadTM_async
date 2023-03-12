@@ -1,6 +1,3 @@
-import addition.functions as func
-
-
 class User:
     def __init__(self, bot, event):
         self.bot = bot

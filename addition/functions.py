@@ -1,12 +1,9 @@
-import json
 import logging
 import os
 from os import listdir, remove
 from sys import argv
 from threading import Thread
 from urllib.error import HTTPError
-
-from bot.bot import Bot
 from moviepy.editor import AudioFileClip
 from pytube import YouTube
 from youtubesearchpython import VideosSearch, CustomSearch
