@@ -24,12 +24,9 @@ def main():
     add_handlers(bot)
 
     log("Starting idle")
-    try:
-        bot.idle()
-    except BaseException:
-        tracemalloc.stop()
+
+    bot.idle()
 
 
 if __name__ == "__main__":
-    tracemalloc.start()
     main()

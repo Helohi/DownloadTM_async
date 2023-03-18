@@ -31,10 +31,6 @@ class UserMessage(User):
             self.delete_user_totally()
         else:  # All checks passed correctly
             UserMessage.processing[self.id] = self.event
-
-            import tracemalloc
-            print(tracemalloc.get_tracemalloc_memory())
-
             self.work_out()
         return self.delete_user_totally()
 
