@@ -25,7 +25,7 @@ gauth = CreateAuthFiles(gauth)
 gauth2 = CreateAuthFiles(gauth2)
 
 
-def upload_file(path: str, title: str = None, folder: str = None, return_list: list = None) -> GoogleDrive.CreateFile:
+def upload_file(path: str, title: str = None, folder: str = None) -> GoogleDrive.CreateFile:
     """ Uploading files to the google drive """
     # Preparing variables
     if not folder:
@@ -65,8 +65,6 @@ def upload_file(path: str, title: str = None, folder: str = None, return_list: l
     permission = file.auth.service.permissions().insert(
         fileId=file['id'], body=new_permission, supportsTeamDrives=True).execute(http=file.http)
 
-    if return_list:
-        return_list.append(file['alternateLink'])
     return file['alternateLink']
 
 
