@@ -19,14 +19,14 @@ def CreateAuthFiles(gauthparam):
     return gauthparam
 
 
-# Authorization in google drive
+# Authorization in Google Drive
 gauth, gauth2 = GoogleAuth(), ga2()
 gauth = CreateAuthFiles(gauth)
 gauth2 = CreateAuthFiles(gauth2)
 
 
 def upload_file(path: str, title: str = None, folder: str = None) -> GoogleDrive.CreateFile:
-    """ Uploading files to the google drive """
+    """ Uploading files to the Google Drive """
     # Preparing variables
     if not folder:
         folder = '1azbHPoW8rOeeVV08szvRWQAWrjJcn0mz'
@@ -103,7 +103,7 @@ def delete_one_file(file_name: str, folder: str = None):
 
 
 def get_all_files(folder: str = '1azbHPoW8rOeeVV08szvRWQAWrjJcn0mz') -> list:
-    """ Get all files from folder in google drive 
+    """ Get all files from folder in Google Drive
     :param folder: Folder from wich all files will get or None"""
     # Checking vars
     drive = GoogleDrive(gauth)
