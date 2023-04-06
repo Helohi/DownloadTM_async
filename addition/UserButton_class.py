@@ -30,7 +30,6 @@ class UserButtons(User):
             self.download_video_via_UserMessage_class()
         else:  # Ask to choose quality
             self.__ask_user_to_choose_quality()
-        return self.delete_user_totally()
 
     def delete_file_from_google_drive(self):
         import addition.googleapi as gapi
@@ -42,7 +41,6 @@ class UserButtons(User):
         if UserMessage.is_user_processing(self):  # No Spam
             func.log(f"Spamming id={self.id}")
             self.send_message_in_bot(Text.NO_SPAM)
-            self.delete_user_totally()
         else:
             self.callback_query = self.callback_query.lstrip("download:")
             self.change_into_UserMessage()

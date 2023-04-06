@@ -65,6 +65,7 @@ def upload_file(path: str, title: str = None, folder: str = None) -> GoogleDrive
     permission = file.auth.service.permissions().insert(
         fileId=file['id'], body=new_permission, supportsTeamDrives=True).execute(http=file.http)
 
+    del permission
     return file['alternateLink']
 
 
@@ -80,6 +81,8 @@ def delete_all_files_from_folders(folder: str = None, num: int = 20):
     # Deleting all files from folders
     for file in file_list[:num]:
         file.Delete()
+
+    del file_list
     return True
 
 

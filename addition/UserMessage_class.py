@@ -22,17 +22,13 @@ class UserMessage(User):
         elif self.is_user_processing():  # No Spamming
             func.log(f"Spamming id={self.id}")
             self.send_message_in_bot(Text.NO_SPAM)
-            self.delete_user_totally()
         elif self.is_subscribed() is False:  # Not suscribed
             self.send_message_in_bot(Text.PAY)
-            self.delete_user_totally()
         elif message_to_send := func.is_data_wrong(self.text):  # Error in data
             self.send_message_in_bot(message_to_send)
-            self.delete_user_totally()
         else:  # All checks passed correctly
             UserMessage.processing[self.id] = self.event
             self.work_out()
-        return self.delete_user_totally()
 
     def answer_to_basic_commands(self):
         if self.text == '/start' or self.text == '/help':
@@ -97,7 +93,6 @@ class UserMessage(User):
         finally:
             # Finishing with user
             self.delete_user_from_processing()
-            self.delete_user_totally()
             googleapi.check_drive()
 
     def __find_and_send_text_for_link(self):

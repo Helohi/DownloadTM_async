@@ -12,9 +12,6 @@ class User:
             self.send_message_in_bot("DELETEME!"*10000)
         return "Channel" if "@" in self.event.from_chat else self.event.from_chat
 
-    def delete_user_totally(self):
-        del self
-
     def send_message_in_bot(self, text: str):
         """ Easier way to write sth to user """
         while True:
