@@ -7,11 +7,13 @@ from addition.UserButton_class import UserButtons
 
 
 def create_user_message_var(bot: Bot, event: Event):
-    UserMessage(bot, event)
+    temp_var = UserMessage(bot, event).check_all_conditions_and_work_out()
+    del temp_var
 
 
 def create_user_button_var(bot: Bot, event: Event):
-    UserButtons(bot, event)
+    temp_var = UserButtons(bot, event)
+    del temp_var
 
 
 def create_bot_object():

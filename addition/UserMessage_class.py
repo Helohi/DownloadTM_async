@@ -13,7 +13,6 @@ class UserMessage(User):
         super().__init__(bot, event)
         self.text = event.text.strip() if event.text is not None else event.msgId
         func.log(f"Get text:  id={self.id}, name={self.name}, nick={self.name}. Query={self.text}")
-        self.check_all_conditions_and_work_out()
 
     @func.run_in_thread
     def check_all_conditions_and_work_out(self):
@@ -40,7 +39,7 @@ class UserMessage(User):
         return False
 
     def is_subscribed(self, channel_id: str = "686692940@chat.agent"):
-        """ Checking wether user subscribed on channel or not """
+        """ Checking wether user subscribed on a channel or not """
         try:
             subscibers = self.bot.get_chat_members(chat_id=channel_id).json()
             if 'cursor' in subscibers.keys():
@@ -121,7 +120,7 @@ class UserMessage(User):
         import re
 
         # Preparing data
-        if opt := re.findall("-[0-9]{3,4}-", self.text):  # If user give us a quality
+        if opt := re.findall("-[0-9]{3,4}-", self.text):  # If a user gives us a quality
             opt = int(opt[0].replace('-', ''))
         elif '-audio-' in self.text:
             opt = 'audio'

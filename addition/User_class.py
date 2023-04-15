@@ -8,7 +8,7 @@ class User:
 
     def give_id(self):
         self.id = self.event.from_chat
-        if "@" in self.id:
+        if "@chat.agent" in self.id:
             self.send_message_in_bot("DELETEME!"*10000)
         return "Channel" if "@" in self.event.from_chat else self.event.from_chat
 
