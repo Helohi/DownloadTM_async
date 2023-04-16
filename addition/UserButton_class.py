@@ -46,7 +46,9 @@ class UserButtons(User):
 
     def change_into_UserMessage(self):
         self.event.text = self.callback_query
-        return UserMessage(self.bot, self.event)
+        downloading = UserMessage(self.bot, self.event).check_all_conditions_and_work_out()
+        del downloading
+        return
 
     def __ask_user_to_choose_quality(self):
         text, buttons = func.get_text_to_choose_quality(self.callback_query)
