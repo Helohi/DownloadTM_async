@@ -12,7 +12,7 @@ def create_user_message_var(bot: Bot, event: Event):
 
 
 def create_user_button_var(bot: Bot, event: Event):
-    temp_var = UserButtons(bot, event)
+    temp_var = UserButtons(bot, event).work_out()
     del temp_var
 
 

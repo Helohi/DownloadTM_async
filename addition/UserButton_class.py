@@ -13,7 +13,6 @@ class UserButtons(User):
 
         func.log(f"Got button callbak from: id={self.id}, name={self.name}, nick={self.nick}, "
                  f"callquery={self.callback_query}")
-        self.work_out()
 
     def stop_user_button_from_loading(self):
         self.bot.answer_callback_query(
